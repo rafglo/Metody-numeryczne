@@ -1,53 +1,55 @@
 import numpy as np
-import scipy
+from scipy.linalg import solve
 
-def swap_rows(mat, i, j):
-    n = len(mat[0])
-    for k in range(n):
-        temp = mat[i][k]
-        mat[i][k] = mat[j][k]
-        mat[j][k] = temp
-
-def gauss(mat):
-    swap_count = 0
-    mat = np.array(mat, dtype=float)
-    m = len(mat)
-    n = len(mat[0])
-    h = 0
-    k = 0
-    while h < m and k < n:
-        i_max = np.argmax(np.abs(mat[h:, k])) + h
-        if mat[i_max, k] == 0:
-            k += 1
-        else:
-            if i_max != h:
-                swap_rows(mat, h, i_max)
-                swap_count += 1
-            for i in range(h+1, m):
-                f = mat[i, k] / mat[h, k]
-                mat[i, k] = 0
-                for j in range(k+1, n):
-                    mat[i,j] = mat[i,j] - mat[h,j] * f
-            h += 1
-            k += 1
-    return mat, swap_count
-            
-    
-            
 A = np.array([
-    [0, 0, 2, 1, 2],
-    [0, 1, 0, 2, -1],
-    [1, 2, 0, -2, 0],
-    [0, 0, 0, -1, 1],
-    [0, 1, -1, 1, -1]
+    [1, 1/2, 1/3, 1/4, 1/5],
+    [1/2, 1/3, 1/4, 1/5, 1/6],
+    [1/3, 1/4, 1/5, 1/6, 1/7],
+    [1/4, 1/5, 1/6, 1/7, 1/8],
+    [1/5, 1/6, 1/7, 1/8, 1/9]
 ])
 
-m =len(A)
-A = gauss(A)[0]
+b = np.array([5,4,3,2,1])
 
-for i in range(m-1, -1, -1):
-        j = np.argmax(np.abs(A[i]))
-        A[i] /= A[i][j]
-        for k in range(i-1, -1, -1):
-            A[k] -= A[i] * A[k][j]
-print(A)
+def lu(mat):
+    n = len(mat)
+    L, U = np.zeros((n,n)), np.zeros((n,n))
+
+    for i in range(n):
+        for k in range(i, n):
+            sum_ = 0
+            for j in range(i):
+                sum_ += (L[i][j] * U[j][k])
+            U[i][k] = mat[i][k] - sum_
+
+        for k in range(i, n):
+            if (i == k):
+                L[i][i] = 1 
+            else:
+                sum_ = 0
+                for j in range(i):
+                    sum_ += (L[k][j] * U[j][i])
+                L[k][i] = (mat[k][i] - sum_) / U[i][i]
+    return L, U
+
+def dokladnosc_maszynowa(x_0):
+    x = x_0
+    while x + 1 != 1:
+        x /= 2
+    return x
+            
+def iteracyjne_poprawianie_rozwiazan(A, b):
+    L,U = lu(A) #rozkład LU
+    y = solve(L, b) #rozwiązujemy za pomocą LU
+    x = solve(U, y)
+    Ax = np.dot(A, x)
+    r = b - Ax #reszty
+    u = dokladnosc_maszynowa(1)
+    while np.linalg.norm(r,np.inf) < np.linalg.norm(Ax, np.inf) * u:
+        print(1)
+        delta_x = solve(A, r)
+        x += delta_x
+        r = b - np.dot(A, x)
+    return x
+
+print(iteracyjne_poprawianie_rozwiazan(A, b))
