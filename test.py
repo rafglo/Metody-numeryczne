@@ -15,7 +15,7 @@ def generate_matrix(n):
 
 def ldu(mat):
     n = len(mat)
-    l, d, u = mat, mat, mat
+    l, d, u = copy(mat), mat, mat
     for i in range(n):
         for j in range(n):
             if j > i:
