@@ -1,55 +1,34 @@
 import numpy as np
-from scipy.linalg import solve
 
-A = np.array([
-    [1, 1/2, 1/3, 1/4, 1/5],
-    [1/2, 1/3, 1/4, 1/5, 1/6],
-    [1/3, 1/4, 1/5, 1/6, 1/7],
-    [1/4, 1/5, 1/6, 1/7, 1/8],
-    [1/5, 1/6, 1/7, 1/8, 1/9]
-])
-
-b = np.array([5,4,3,2,1])
-
-def lu(mat):
-    n = len(mat)
-    L, U = np.zeros((n,n)), np.zeros((n,n))
-
+def generate_matrix(n):
+    mat = np.zeros((n,n))
     for i in range(n):
-        for k in range(i, n):
-            sum_ = 0
-            for j in range(i):
-                sum_ += (L[i][j] * U[j][k])
-            U[i][k] = mat[i][k] - sum_
+        mat[i][i] = 4
+        if i - 1 >= 0:
+            mat[i][i-1] = -1
+        if i + 1 < n:
+            mat[i][i+1] = -1
+        mat[0][-1] = 1
+        mat[-1][0] = 1
+    return mat
+                     
 
-        for k in range(i, n):
-            if (i == k):
-                L[i][i] = 1 
-            else:
-                sum_ = 0
-                for j in range(i):
-                    sum_ += (L[k][j] * U[j][i])
-                L[k][i] = (mat[k][i] - sum_) / U[i][i]
-    return L, U
+def ldu(mat):
+    n = len(mat)
+    l, d, u = mat, mat, mat
+    for i in range(n):
+        for j in range(n):
+            if j > i:
+                l[i][j] = 0
+                d[i][j] = 0
+            if j == i:
+                l[i][j] = 0
+                u[i][j] = 0
+            if i > j:
+                u[i][j] = 0
+                d[i][j] = 0
+    return l, d, u 
 
-def dokladnosc_maszynowa(x_0):
-    x = x_0
-    while x + 1 != 1:
-        x /= 2
-    return x
-            
-def iteracyjne_poprawianie_rozwiazan(A, b):
-    L,U = lu(A) #rozkład LU
-    y = solve(L, b) #rozwiązujemy za pomocą LU
-    x = solve(U, y)
-    Ax = np.dot(A, x)
-    r = b - Ax #reszty
-    u = dokladnosc_maszynowa(1)
-    while np.linalg.norm(r,np.inf) < np.linalg.norm(Ax, np.inf) * u:
-        print(1)
-        delta_x = solve(A, r)
-        x += delta_x
-        r = b - np.dot(A, x)
-    return x
+a = generate_matrix(5)
 
-print(iteracyjne_poprawianie_rozwiazan(A, b))
+print(ldu(a))
